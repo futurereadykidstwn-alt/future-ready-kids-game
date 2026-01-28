@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Future-Ready Kids: Stars of Tomorrow</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase App (Compatibility Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <!-- Firebase Firestore (Compatibility Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase Auth (Compatibility Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <style>
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            /* Absolute Night Black */
+            background: #000000 !important;
+        }
+
+        body {
+            font-family: 'Space+Grotesk', sans-serif;
+            background-image: 
+                radial-gradient(circle at 50% 50%, #0a1122 0%, #000000 80%),
+                radial-gradient(circle at 20% 30%, #050a18 0%, transparent 50%) !important;
+            overflow: hidden;
+            color: white;
+            position: fixed;
+        }
+
+        /* Star Dust Background */
+        .background-stars {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .tiny-star {
+            position: absolute;
+            background: #ffffff;
+            border-radius: 50%;
+            opacity: 0.4;
+            box-shadow: 0 0 3px #ffffff;
+        }
+
+        /* Interactive User Stars */
+        .star-container {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: float var(--float-duration) infinite ease-in-out;
+            z-index: 10;
+            touch-action: none;
+        }
+
+        .star-svg {
+            fill: #ffd700;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9));
+            animation: twinkle var(--twinkle-duration) infinite ease-in-out;
+        }
+
+        .star-container:hover, .star-container:active {
+            transform: scale(2.5) rotate(15deg);
+            z-index: 50;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5)); }
+            50% { opacity: 1; filter: drop-shadow(0 0 25px rgba(255, 215, 0, 1)); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(-15px) translateX(8px); }
+        }
+
+        .star-label {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .star-container:hover .star-label {
+            opacity: 1;
+        }
+
+        #ui-overlay {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .glass-card {
+            background: rgba(10, 15, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        .input-style {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            outline: none;
+        }
+
+        .input-style:focus {
+            border-color: #ffd700;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.96);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bg-stars" class="background-stars"></div>
+    <div id="stars-container" class="relative w-full h-full"></div>
+
+    <!-- Header -->
+    <div class="absolute top-10 left-0 right-0 text-center pointer-events-none px-6">
+        <h1 class="text-3xl md:text-5xl font-bold tracking-widest uppercase text-yellow-400">Stars of Tomorrow</h1>
+        <p class="text-blue-200 mt-2 text-sm opacity-60">Add your light to the night sky</p>
+    </div>
+
+    <!-- Interface -->
+    <div id="ui-overlay">
+        <div class="glass-card p-5">
+            <div class="flex flex-col gap-3">
+                <input id="userName" type="text" placeholder="Your Name" class="input-style p-3 rounded-xl text-sm" maxlength="20">
+                <div class="flex gap-2">
+                    <input id="userMessage" type="text" placeholder="Your wish for the future..." class="flex-1 input-style p-3 rounded-xl text-sm">
+                    <button id="sendBtn" class="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-tighter transition-transform active:scale-95">Shine</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="modal" onclick="this.style.display='none'">
+        <div class="glass-card p-10 max-w-lg w-full text-center relative mx-4" onclick="event.stopPropagation()">
+            <h2 id="modalName" class="text-yellow-400 text-2xl font-bold mb-4"></h2>
+            <p id="modalText" class="text-3xl font-light italic text-white"></p>
+            <button onclick="document.getElementById('modal').style.display='none'" class="mt-8 px-8 py-2 border border-white/20 rounded-full text-xs text-gray-400 uppercase tracking-widest">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Use global variables provided by the environment if available
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'stars-global-v4';
+        
+        let db, starsCol;
+        let isFirebaseActive = false;
+
+        // 1. Initialize Stars Dust
+        function createBackground() {
+            const bg = document.getElementById('bg-stars');
+            for(let i=0; i<250; i++) {
+                const s = document.createElement('div');
+                s.className = 'tiny-star';
+                const size = Math.random() * 2;
+                s.style.width = size + 'px';
+                s.style.height = size + 'px';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                s.style.opacity = Math.random() * 0.7;
+                bg.appendChild(s);
+            }
+        }
+
+        // 2. Create Star Function
+        function createStar(data) {
+            const starDiv = document.createElement('div');
+            starDiv.className = 'star-container';
+            const size = Math.random() * 20 + 25;
+            
+            starDiv.style.width = size + 'px';
+            starDiv.style.height = size + 'px';
+            starDiv.style.left = (data.x || Math.random() * 90 + 5) + '%';
+            starDiv.style.top = (data.y || Math.random() * 60 + 10) + '%';
+            starDiv.style.setProperty('--float-duration', (Math.random() * 5 + 5) + 's');
+            starDiv.style.setProperty('--twinkle-duration', (Math.random() * 2 + 1) + 's');
+            
+            starDiv.innerHTML = `
+                <svg viewBox="0 0 24 24" class="star-svg w-full h-full">
+                    <path d="M12 .587l3.668 7.431 8.332 1.21-6.001 5.85 1.416 8.265L12 18.896l-7.415 3.897 1.416-8.265-6.001-5.85 8.332-1.21L12 .587z"/>
+                </svg>
+                <div class="star-label text-white">${data.name || 'Star'}</div>
+            `;
+            
+            starDiv.onclick = () => {
+                document.getElementById('modalName').innerText = data.name;
+                document.getElementById('modalText').innerText = `"${data.message}"`;
+                document.getElementById('modal').style.display = 'flex';
+            };
+            document.getElementById('stars-container').appendChild(starDiv);
+        }
+
+        // 3. App Logic
+        async function startApp() {
+            createBackground();
+
+            if (firebaseConfig) {
+                try {
+                    firebase.initializeApp(firebaseConfig);
+                    db = firebase.firestore();
+                    const auth = firebase.auth();
+                    
+                    // Auth process
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await auth.signInWithCustomToken(__initial_auth_token);
+                    } else {
+                        await auth.signInAnonymously();
+                    }
+
+                    starsCol = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages');
+                    
+                    starsCol.onSnapshot(snap => {
+                        document.getElementById('stars-container').innerHTML = '';
+                        snap.forEach(doc => createStar(doc.data()));
+                    }, err => useLocalMode());
+
+                    isFirebaseActive = true;
+                } catch (e) {
+                    useLocalMode();
+                }
+            } else {
+                useLocalMode();
+            }
+        }
+
+        function useLocalMode() {
+            isFirebaseActive = false;
+            const saved = JSON.parse(localStorage.getItem('stars_local') || '[]');
+            if (saved.length === 0) {
+                createStar({name: "Guide", message: "Firebase not connected. Saving to this device.", x: 50, y: 40});
+            } else {
+                saved.forEach(s => createStar(s));
+            }
+        }
+
+        document.getElementById('sendBtn').onclick = async () => {
+            const name = document.getElementById('userName').value.trim() || "Visitor";
+            const message = document.getElementById('userMessage').value.trim();
+            if (!message) return;
+
+            const data = {
+                name, message, 
+                x: Math.random() * 85 + 5, 
+                y: Math.random() * 55 + 10,
+                time: Date.now()
+            };
+
+            if (isFirebaseActive) {
+                try { await starsCol.add(data); } catch(e) { saveLocal(data); }
+            } else {
+                saveLocal(data);
+            }
+
+            document.getElementById('userMessage').value = '';
+        };
+
+        function saveLocal(data) {
+            const saved = JSON.parse(localStorage.getItem('stars_local') || '[]');
+            saved.push(data);
+            localStorage.setItem('stars_local', JSON.stringify(saved));
+            createStar(data);
+        }
+
+        window.onload = startApp;
+    </script>
+</body>
+</html>
